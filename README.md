@@ -15,4 +15,4 @@ option path '/etc/config/ddos-drop.sh'
 option fw4_compatible '1'
 
 - edit /etc/config/ddos-drop.sh at the top with nano or vim and activate the desired functions
--With fw4 restart the script is activated and loaded every time the firewall is started or reloaded
+- With fw4 restart the script is activated and loaded every time the firewall is started or reloaded
