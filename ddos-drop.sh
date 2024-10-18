@@ -248,9 +248,13 @@ nft -f - <<TABLE
 	tcp flags syn \
 			tcp option maxseg size 1-535 \
 			counter drop
-    meta l4proto tcp tcp flags != fin,rst,psh,urg / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags != fin,syn,psh,urg / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags != syn,rst,psh,urg / fin,syn,rst,urg,ack,psh accept
+    	meta l4proto tcp tcp flags syn / fin,syn,rst,urg,ack,psh accept
+	meta l4proto tcp tcp flags fin / fin,syn,rst,urg,ack,psh accept
+	meta l4proto tcp tcp flags rst / fin,syn,rst,urg,ack,psh accept
+	meta l4proto tcp tcp flags ack / fin,syn,rst,urg,ack,psh accept
+	meta l4proto tcp tcp flags syn,ack / fin,syn,rst,urg,ack,psh accept
+	meta l4proto tcp tcp flags fin,ack / fin,syn,rst,urg,ack,psh accept
+	meta l4proto tcp tcp flags rst,ack / fin,syn,rst,urg,ack,psh accept
 	meta l4proto tcp tcp flags syn,urg / fin,syn,rst,urg,ack,psh accept
 	meta l4proto tcp tcp flags fin,ack,urg / fin,syn,rst,urg,ack,psh accept
 	meta l4proto tcp tcp flags ack,urg / fin,syn,rst,urg,ack,psh accept
