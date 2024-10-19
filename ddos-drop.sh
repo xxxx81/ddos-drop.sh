@@ -248,23 +248,18 @@ nft -f - <<TABLE
 	tcp flags syn \
 			tcp option maxseg size 1-535 \
 			counter drop
-    	meta l4proto tcp tcp flags syn / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags fin / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags rst / fin,syn,rst,urg,ack,psh accept
+    meta l4proto tcp tcp flags syn / fin,syn,rst,urg,ack,psh counter accept
+	meta l4proto tcp tcp flags fin / fin,syn,rst,urg,ack,psh counter accept
+	meta l4proto tcp tcp flags rst / fin,syn,rst,urg,ack,psh counter accept
 	meta l4proto tcp tcp flags ack / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags syn,ack / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags fin,ack / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags rst,ack / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags syn,urg / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags fin,ack,urg / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags ack,urg / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags rst,psh / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags ack,psh / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags fin,psh / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags syn,ack,psh / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags rst,ack,psh / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp tcp flags fin,ack,psh / fin,syn,rst,urg,ack,psh accept
-	meta l4proto tcp counter drop
+	meta l4proto tcp tcp flags syn,ack / fin,syn,rst,urg,ack,psh counter accept
+	meta l4proto tcp tcp flags fin,ack / fin,syn,rst,urg,ack,psh counter accept
+	meta l4proto tcp tcp flags rst,ack / fin,syn,rst,urg,ack,psh counter accept
+	meta l4proto tcp tcp flags ack,psh / fin,syn,rst,urg,ack,psh counter accept
+	meta l4proto tcp tcp flags fin,psh / fin,syn,rst,urg,ack,psh counter accept
+	meta l4proto tcp tcp flags ack,fin,psh / fin,syn,rst,urg,ack,psh counter accept
+	meta l4proto tcp counter log prefix "Invalid flags: " drop
+
         return
 
 		}
