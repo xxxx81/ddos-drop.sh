@@ -248,7 +248,7 @@ nft -f - <<TABLE
 	tcp flags syn \
 			tcp option maxseg size 1-535 \
 			counter drop
-    meta l4proto tcp tcp flags syn / fin,syn,rst,urg,ack,psh counter accept
+        meta l4proto tcp tcp flags syn / fin,syn,rst,urg,ack,psh counter accept
 	meta l4proto tcp tcp flags fin / fin,syn,rst,urg,ack,psh counter accept
 	meta l4proto tcp tcp flags rst / fin,syn,rst,urg,ack,psh counter accept
 	meta l4proto tcp tcp flags ack / fin,syn,rst,urg,ack,psh accept
