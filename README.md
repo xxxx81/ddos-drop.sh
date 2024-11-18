@@ -5,13 +5,9 @@ Installation:
 - edit the /etc/config/firewall with nano or vim and add there:
 
 config include
-
 option enabled '1'
-
 option type 'script'
-
 option path '/etc/config/ddos-drop.sh'
-
 option fw4_compatible '1'
 
 - edit /etc/config/ddos-drop.sh at the top with nano or vim and activate the desired functions
