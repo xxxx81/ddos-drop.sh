@@ -10,7 +10,7 @@ option enabled '1'
 
 option type 'script'
 
-option path '/etc/config/ddos-drop.sh'
+option path '/etc/config/test.sh'
 
 option fw4_compatible '1'
 
