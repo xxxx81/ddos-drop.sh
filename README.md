@@ -14,7 +14,7 @@ option path '/etc/config/test.sh'
 
 option fw4_compatible '1'
 
-- edit /etc/config/ddos-drop.sh at the top with nano or vim and activate the desired functions
+- edit /etc/config/test.sh at the top with nano or vim and activate the desired functions
 - With fw4 restart the script is activated and loaded every time the firewall is started or reloaded
 
 Discussions thread in the openwrt forum: https://forum.openwrt.org/t/syn-flood-protection-for-forward/78651
