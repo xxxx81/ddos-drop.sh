@@ -78,9 +78,9 @@ table inet DDOS_Protection {
 	}
  
     chain tcp_limit {               
-               limit rate $tcp_limit/second burst 1 packets accept
-               limit rate over $tcp_limit/second burst 1 packets log prefix "Possible_tcp_attack (drop $drop_time): " update @enemies4 { ip  saddr } counter drop
-               limit rate over $tcp_limit/second burst 1 packets log prefix "Possible_tcp_attack (drop $drop_time): " update @enemies6 { ip6 saddr } counter drop
+             limit rate $tcp_limit/second burst 1 packets accept
+             limit rate over $tcp_limit/second burst 1 packets log prefix "Possible_tcp_attack (drop $drop_time): " update @enemies6 { ip6  saddr } ct event set destroy counter drop
+             limit rate over $tcp_limit/second burst 1 packets log prefix "Possible_tcp_attack (drop $drop_time): " update @enemies4 { ip saddr } ct event set destroy counter drop
 
     }
 
@@ -128,8 +128,8 @@ table inet DDOS_Protection {
 
     chain udp_limit {
                limit rate $udp_limit/second burst 1 packets accept
-               limit rate over $udp_limit/second burst 1 packets log prefix "Possible_udp_attack (drop $drop_time): " update @enemies4 { ip  saddr } counter drop
-               limit rate over $udp_limit/second burst 1 packets log prefix "Possible_udp_attack (drop $drop_time): " update @enemies6 { ip6 saddr } counter drop
+               limit rate over $udp_limit/second burst 1 packets log prefix "Possible_udp_attack (drop $drop_time): " update @enemies4 { ip  saddr } ct event set destroy counter drop
+               limit rate over $udp_limit/second burst 1 packets log prefix "Possible_udp_attack (drop $drop_time): " update @enemies6 { ip6 saddr } ct event set destroy counter drop
     
     }
 
@@ -210,7 +210,7 @@ table inet DDOS_Protection {
 	
     nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, nd-redirect, parameter-problem, router-renumbering} jump icmp_limit
 
-	ip frag-off & 0x1fff != 0 counter drop
+    ip frag-off & 0x1fff != 0 counter drop
 
     ip saddr { $forward_router } counter accept
 
@@ -218,31 +218,31 @@ table inet DDOS_Protection {
 
     udp dport 1-65535 ct state new jump udp_limit
 
-    meta l4proto tcp tcp flags syn tcp option maxseg size 1-535 jump tcp_limit
+    meta l4proto tcp tcp flags syn tcp option maxseg size 1-535 ct state new jump tcp_limit
 
     meta l4proto tcp tcp flags syn tcp option maxseg size 1-535 drop
 	
-    meta l4proto tcp tcp flags syn / fin,syn,rst,urg,ack,psh goto tcp_limit   
+    meta l4proto tcp tcp flags syn / fin,syn,rst,urg,ack,psh ct state new goto tcp_limit   
 
-    meta l4proto tcp tcp flags fin / fin,syn,rst,urg,ack,psh goto tcp_limit    
+    meta l4proto tcp tcp flags fin / fin,syn,rst,urg,ack,psh ct state new goto tcp_limit    
 	
-    meta l4proto tcp tcp flags rst / fin,syn,rst,urg,ack,psh goto tcp_limit   
+    meta l4proto tcp tcp flags rst / fin,syn,rst,urg,ack,psh ct state new goto tcp_limit   
 	
-    meta l4proto tcp tcp flags ack / fin,syn,rst,urg,ack,psh goto tcp_limit
+    meta l4proto tcp tcp flags ack / fin,syn,rst,urg,ack,psh ct state new goto tcp_limit
 	
-    meta l4proto tcp tcp flags syn,ack / fin,syn,rst,urg,ack,psh goto tcp_limit
+    meta l4proto tcp tcp flags syn,ack / fin,syn,rst,urg,ack,psh ct state new goto tcp_limit
 	
-    meta l4proto tcp tcp flags fin,ack / fin,syn,rst,urg,ack,psh goto tcp_limit
+    meta l4proto tcp tcp flags fin,ack / fin,syn,rst,urg,ack,psh ct state new goto tcp_limit
 	
-    meta l4proto tcp tcp flags rst,ack / fin,syn,rst,urg,ack,psh goto tcp_limit    
+    meta l4proto tcp tcp flags rst,ack / fin,syn,rst,urg,ack,psh ct state new goto tcp_limit    
 	
-    meta l4proto tcp tcp flags ack,psh / fin,syn,rst,urg,ack,psh goto tcp_limit
+    meta l4proto tcp tcp flags ack,psh / fin,syn,rst,urg,ack,psh ct state new goto tcp_limit
 	
-    meta l4proto tcp tcp flags fin,psh / fin,syn,rst,urg,ack,psh goto tcp_limit
+    meta l4proto tcp tcp flags fin,psh / fin,syn,rst,urg,ack,psh ct state new goto tcp_limit
 	
-    meta l4proto tcp tcp flags ack,fin,psh / fin,syn,rst,urg,ack,psh goto tcp_limit
+    meta l4proto tcp tcp flags ack,fin,psh / fin,syn,rst,urg,ack,psh ct state new goto tcp_limit
 	
-    meta l4proto tcp jump tcp_limit
+    meta l4proto tcp ct state new jump tcp_limit
 
     meta l4proto tcp counter log prefix "Invalid flags: " drop
 
@@ -256,6 +256,8 @@ table inet DDOS_Protection {
 	ct state established accept
 
     iifname { $wan_device } jump flags_input
+
+	tcp flags & (fin|syn|rst|ack) != syn ct state new counter drop
 
             }
 
@@ -282,7 +284,7 @@ nft -f - <<TABLE
 table inet DDOS_Protection {
 	chain input_chain {
 		
-		iifname { $wan_device } counter drop
+		iifname { $wan_device } ct event set destroy counter drop
 
         }
     }
@@ -297,7 +299,7 @@ nft -f - <<TABLE
 table inet DDOS_Protection {
 	chain input_chain {
 		
-		iifname { Wg0,Wg1,Wg2,Wg3,Wg4,Wg5,Wg6,Wg7,Wg8,Wg9 } counter drop
+		iifname { Wg0,Wg1,Wg2,Wg3,Wg4,Wg5,Wg6,Wg7,Wg8,Wg9 } ct event set destroy counter drop
 
       }
    }
@@ -315,7 +317,7 @@ nft -f - <<TABLE
         	
 		iifname { $wan_device } ip saddr { $forward_router } counter accept
 
-        iifname { $wan_device } ip6 saddr { $forward_router_IpV6 } counter accept
+		iifname { $wan_device } ip6 saddr { $forward_router_IpV6 } counter accept
 
 		iifname { $wan_device } ip saddr { $bogon_adresses } counter drop
 
@@ -359,3 +361,4 @@ fi
 $verbose
 
 exit 0
+
