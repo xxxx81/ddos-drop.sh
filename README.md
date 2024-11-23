@@ -1,7 +1,7 @@
 The script is intended for Openwrt but should also run on other systems with autodetection switched off.
 Installation:
 - save the script
-- transfer it with scp or a Windows replacement to /etc/config/ddos-drop.sh
+- transfer it with scp or a Windows replacement to /etc/config/test.sh
 - edit the /etc/config/firewall with nano or vim and add there:
 
 config include
