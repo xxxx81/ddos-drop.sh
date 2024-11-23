@@ -244,7 +244,7 @@ table inet DDOS_Protection {
 	
     meta l4proto tcp jump tcp_limit
 
-    meta l4proto tcp counter log prefix "Invalid flags: " drop
+    meta l4proto tcp counter log prefix "Invalid flags: " ct event set destroy drop
 
     return
 
