@@ -242,7 +242,7 @@ table inet DDOS_Protection {
 	
     meta l4proto tcp tcp flags ack,fin,psh / fin,syn,rst,urg,ack,psh ct state new goto tcp_limit
 	
-    meta l4proto tcp ct state new jump tcp_limit
+    meta l4proto tcp jump tcp_limit
 
     meta l4proto tcp counter log prefix "Invalid flags: " drop
 
