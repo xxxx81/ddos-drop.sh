@@ -198,6 +198,8 @@ table inet DDOS_Protection {
     ip  saddr @enemies4  update @enemies4 { ip  saddr }  counter  drop
     ip6 saddr @enemies6  update @enemies6 { ip6 saddr }  counter  drop
 
+    ip frag-off & 0x1fff != 0 counter drop
+
     }
 
     chain flags_input {
@@ -209,9 +211,7 @@ table inet DDOS_Protection {
 	ip protocol icmpv6 icmpv6 type {destination-unreachable, packet-too-big, time-exceeded, echo-request, echo-reply, mld-listener-query, mld-listener-report, mld-listener-reduction, nd-router-solicit, \
 	
     nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, nd-redirect, parameter-problem, router-renumbering} jump icmp_limit
-
-    ip frag-off & 0x1fff != 0 counter drop
-
+    
     ip saddr { $forward_router } counter accept
 
     ip6 saddr { $forward_router_IpV6 } counter accept
