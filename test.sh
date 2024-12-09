@@ -10,6 +10,7 @@ udp_limit_enable="0"
 icmp_limit_enable="0"
 arp_limit_enable="0"
 bogon="0"
+ingress_hook_drop="0"
 
 #***********parameter section********************************
 tcp_limit="50"
@@ -97,11 +98,11 @@ table inet DDOS_Protection {
     }
 
     chain tcp_limit {               
-           ip  saddr @adress4 limit rate $tcp_limit/second burst 1 packets counter accept
-           ip6  saddr @adress6 limit rate $tcp_limit/second burst 1 packets counter accept
+           ip  saddr @adress4 limit rate 2/second burst 1 packets counter accept
+           ip6  saddr @adress6 limit rate 2/second burst 1 packets counter accept
            ip6  saddr @adress6 limit rate over $tcp_limit/second burst 1 packets log prefix "Possible_tcp_attack (drop $drop_time): " update @enemies6 { ip6  saddr } ct event set destroy counter drop
            ip  saddr @adress4 limit rate over $tcp_limit/second burst 1 packets log prefix "Possible_tcp_attack (drop $drop_time): " update @enemies4 { ip saddr } ct event set destroy counter drop
-	       counter drop
+	   ct event set destroy counter drop
 
     }
 
@@ -167,12 +168,11 @@ nft -f - <<TABLE
 table inet DDOS_Protection {
 
     chain udp_limit {
-               ip  saddr @adress4 limit rate $udp_limit/second burst 1 packets counter accept
-               ip6  saddr @adress6 limit rate $udp_limit/second burst 1 packets counter accept
+               ip  saddr @adress4 limit rate 2/second burst 1 packets counter accept
+               ip6  saddr @adress6 limit rate 2/second burst 1 packets counter accept
                ip  saddr @adress4 limit rate over $udp_limit/second burst 1 packets log prefix "Possible_udp_attack (drop $drop_time): " update @enemies4 { ip  saddr } ct event set destroy counter drop
                ip6  saddr @adress6 limit rate over $udp_limit/second burst 1 packets log prefix "Possible_udp_attack (drop $drop_time): " update @enemies6 { ip6 saddr } ct event set destroy counter drop
-    	       counter drop
-
+	       ct event set destroy counter drop
     }
 
 }
@@ -237,14 +237,6 @@ fi
 nft -f - <<TABLE
 
 table inet DDOS_Protection {
-          
-    chain input_drop { type filter hook prerouting priority -500;
-    ip  saddr @enemies4  update @enemies4 { ip  saddr }  counter  drop
-    ip6 saddr @enemies6  update @enemies6 { ip6 saddr }  counter  drop
-
-    ip frag-off & 0x1fff != 0 counter drop
-
-    }
 
     chain flags_input {
        
@@ -260,9 +252,7 @@ table inet DDOS_Protection {
 
     ip6 saddr { $forward_router_IpV6 } counter accept
 
-    udp sport 1-65535 ct state new goto udp_limit
-
-    udp sport 1-65535 log prefix "invalid Udp packet: " ct event set destroy counter drop
+    ct state new udp sport 1-65535 goto udp_limit
 
     meta l4proto tcp tcp flags syn tcp option maxseg size 1-535 jump tcp_limit
 
@@ -301,19 +291,60 @@ table inet DDOS_Protection {
 
 	iifname { $wan_device,Wg0,Wg1,Wg2,Wg3,Wg4,Wg5,Wg6,Wg7,Wg8,Wg9 } ct status seen-reply accept
 
-    iifname { $wan_device,Wg0,Wg1,Wg2,Wg3,Wg4,Wg5,Wg6,Wg7,Wg8,Wg9 } add @adress4 { ip  saddr }
+	iifname { $wan_device,Wg0,Wg1,Wg2,Wg3,Wg4,Wg5,Wg6,Wg7,Wg8,Wg9 } add @adress4 { ip  saddr }
 
-    iifname { $wan_device,Wg0,Wg1,Wg2,Wg3,Wg4,Wg5,Wg6,Wg7,Wg8,Wg9 } add @adress6 { ip6  saddr }
+ 	iifname { $wan_device,Wg0,Wg1,Wg2,Wg3,Wg4,Wg5,Wg6,Wg7,Wg8,Wg9 } add @adress6 { ip6  saddr }
 
-    iifname { $wan_device,Wg0,Wg1,Wg2,Wg3,Wg4,Wg5,Wg6,Wg7,Wg8,Wg9 } jump flags_input
+ 	iifname { $wan_device,Wg0,Wg1,Wg2,Wg3,Wg4,Wg5,Wg6,Wg7,Wg8,Wg9 } jump flags_input
 
-	tcp flags & (fin|syn|rst|ack) != syn ct state new counter reject with tcp reset
+	tcp flags & (fin|syn|rst|ack) != syn ct state new counter drop
+
+	}
+
+    chain icmp_postrouting_drop {
+		      type filter hook postrouting priority 0;
+
+    oifname { $wan_device,Wg0,Wg1,Wg2,Wg3,Wg4,Wg5,Wg6,Wg7,Wg8,Wg9 } icmp type {echo-reply, destination-unreachable, source-quench, redirect, time-exceeded, parameter-problem, timestamp-request, timestamp-reply, info-request, info-reply, \
+     address-mask-request, address-mask-reply, router-advertisement, router-solicitation} ct event set destroy counter drop
+
+    oifname { $wan_device,Wg0,Wg1,Wg2,Wg3,Wg4,Wg5,Wg6,Wg7,Wg8,Wg9 } icmpv6 type {destination-unreachable, packet-too-big, time-exceeded, echo-reply, mld-listener-query, mld-listener-report, mld-listener-reduction, nd-router-solicit, \
+     nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, nd-redirect, parameter-problem, router-renumbering} ct event set destroy counter drop
+
+	}
+
+      chain input_drop { type filter hook prerouting priority -500;
+          ip  saddr @enemies4  update @enemies4 { ip  saddr }  counter  drop
+          ip6 saddr @enemies6  update @enemies6 { ip6 saddr }  counter  drop
+
+          ip frag-off & 0x1fff != 0 counter drop
+
+	}
+
+}
+
+TABLE
+
+if [ $ingress_hook_drop -ge 1 ]; then
+
+nft -f - <<TABLE
+
+         table inet DDOS_Protection {
+
+    chain ingress_hook_drop {
+        	type filter hook ingress devices = { $wan_device } priority -500;
+
+		ip  saddr @enemies4  update @enemies4 { ip  saddr }  counter  drop
+     		ip6 saddr @enemies6  update @enemies6 { ip6 saddr }  counter  drop
+
+     		ip frag-off & 0x1fff != 0 counter drop
 
             }
 
 }
 
 TABLE
+
+fi
 
 if [ $arp_limit_enable -ge 1 ]; then
 
@@ -411,3 +442,4 @@ fi
 $verbose
 
 exit 0
+
