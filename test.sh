@@ -278,9 +278,13 @@ table inet DDOS_Protection {
 	
     meta l4proto tcp tcp flags ack,fin,psh / fin,syn,rst,urg,ack,psh ct status confirmed goto tcp_limit
 	
-    meta l4proto tcp jump tcp_limit
+    meta l4proto tcp ip saddr @adress4 limit rate over $tcp_limit/second burst 1 packets log prefix "Possible_tcp_attack (drop $drop_time): " update @enemies4 { ip saddr } \
+    ct event set destroy counter drop
 
-    meta l4proto tcp counter log prefix "Invalid flags: " ct event set destroy drop
+    meta l4proto tcp ip6 saddr @adress6 limit rate over $tcp_limit/second burst 1 packets log prefix "Possible_tcp_attack (drop $drop_time): " update @enemies6 { ip6 saddr } \
+    ct event set destroy counter drop
+
+    meta l4proto tcp counter ct event set destroy drop
 
     return
 
