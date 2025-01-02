@@ -254,9 +254,11 @@ table inet DDOS_Protection {
 
     ct state new udp sport 1-65535 goto udp_limit
 
-    meta l4proto tcp tcp flags syn tcp option maxseg size 1-535 jump tcp_limit
+    meta l4proto tcp tcp flags syn tcp option maxseg size 1-535 ip saddr @adress4 limit rate over $tcp_limit/second burst 1 packets log prefix "Possible_tcp_attack (drop $drop_time): " update @enemies4 { ip saddr } counter drop
 
-    meta l4proto tcp tcp flags syn tcp option maxseg size 1-535 drop
+    meta l4proto tcp tcp flags syn tcp option maxseg size 1-535 ip6 saddr @adress6 limit rate over $tcp_limit/second burst 1 packets log prefix "Possible_tcp_attack (drop $drop_time): " update @enemies6 { ip6 saddr } counter drop
+
+    meta l4proto tcp tcp flags syn tcp option maxseg size 1-535 counter drop
 	
     meta l4proto tcp tcp flags syn / fin,syn,rst,urg,ack,psh ct state new goto tcp_limit   
 
