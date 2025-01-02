@@ -240,17 +240,17 @@ table inet DDOS_Protection {
 
     chain flags_input {
        
-	ip protocol icmp icmp type {echo-reply, destination-unreachable, source-quench, redirect, echo-request, time-exceeded, parameter-problem, timestamp-request, timestamp-reply, info-request, info-reply, \
-	
-    address-mask-request, address-mask-reply, router-advertisement, router-solicitation} jump icmp_limit
-
-    ip protocol icmpv6 icmpv6 type {destination-unreachable, packet-too-big, time-exceeded, echo-request, echo-reply, mld-listener-query, mld-listener-report, mld-listener-reduction, nd-router-solicit, \
-	
-    nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, nd-redirect, parameter-problem, router-renumbering} jump icmp_limit
-
     ip saddr { $forward_router } counter accept
 
     ip6 saddr { $forward_router_IpV6 } counter accept
+    
+    ip protocol icmp icmp type {echo-reply, destination-unreachable, source-quench, redirect, echo-request, time-exceeded, parameter-problem, timestamp-request, timestamp-reply, info-request, info-reply, \
+	
+    address-mask-request, address-mask-reply, router-advertisement, router-solicitation} goto icmp_limit
+
+    ip protocol icmpv6 icmpv6 type {destination-unreachable, packet-too-big, time-exceeded, echo-request, echo-reply, mld-listener-query, mld-listener-report, mld-listener-reduction, nd-router-solicit, \
+	
+    nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, nd-redirect, parameter-problem, router-renumbering} goto icmp_limit
 
     ct state new udp sport 1-65535 goto udp_limit
 
